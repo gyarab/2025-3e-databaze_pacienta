@@ -1,11 +1,14 @@
+/* The Dashboard.tsx file implements the main dashboard page for the MediCare app. 
+It displays a summary of health-related events (such as surgeries, medications, documents, and rehabilitation) using cards and a timeline. 
+The page allows users to add new health events via a dialog, and it visually summarizes the number and types of events. The timeline shows all recorded events in chronological order, 
+and the UI is built using custom components and icons for a modern, user-friendly experience.*/
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { format } from "date-fns";
-import { cs } from "date-fns/locale";
+import { Card } from "@/components/ui/card";
+import { Plus, FileText, Pill, Activity, Calendar } from "lucide-react";
+import { TimelineEvent } from "@/components/TimelineEvent";
+import { AddEventDialog } from "@/components/AddEventDialog";
 
 export type HealthEvent = {
   id: string;
@@ -17,174 +20,170 @@ export type HealthEvent = {
   doctor?: string;
 };
 
-const typeLabels = {
-  surgery: "Operace",
-  medication: "Léky",
-  rehabilitation: "Rehabilitace",
-  document: "Dokument",
-  spa: "Lázně"
-};
+// Mock data pro demonstraci
+const mockEvents: HealthEvent[] = [
+  {
+    id: "1",
+    type: "surgery",
+    title: "Operace kolene",
+    date: "2024-03-15",
+    description: "Artroskopie pravého kolene",
+    location: "Nemocnice Na Bulovce",
+    doctor: "MUDr. Jan Novák"
+  },
+  {
+    id: "2",
+    type: "medication",
+    title: "Předpis léků",
+    date: "2024-03-20",
+    description: "Ibuprofen 400mg, Pantoprazol 20mg",
+    doctor: "MUDr. Jan Novák"
+  },
+  {
+    id: "3",
+    type: "rehabilitation",
+    title: "Rehabilitace",
+    date: "2024-04-01",
+    description: "10 sezení fyzioterapie",
+    location: "Rehabilitační centrum Praha"
+  },
+  {
+    id: "4",
+    type: "document",
+    title: "Lékařská zpráva",
+    date: "2024-04-15",
+    description: "Kontrolní vyšetření po operaci",
+    doctor: "MUDr. Jan Novák"
+  }
+  
+];
 
 const Dashboard = () => {
-  const [events, setEvents] = useState<HealthEvent[]>([]);
-  const [formData, setFormData] = useState({
-    type: "surgery" as HealthEvent["type"],
-    title: "",
-    date: new Date().toISOString().split("T")[0],
-    description: "",
-    location: "",
-    doctor: ""
-  });
+  const [events, setEvents] = useState<HealthEvent[]>(mockEvents);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newEvent: HealthEvent = {
-      id: Date.now().toString(),
-      ...formData
+  const handleAddEvent = (newEvent: Omit<HealthEvent, "id">) => {
+    const event: HealthEvent = {
+      ...newEvent,
+      id: Date.now().toString()
     };
-    setEvents([newEvent, ...events].sort((a, b) => 
+    setEvents([event, ...events].sort((a, b) => 
       new Date(b.date).getTime() - new Date(a.date).getTime()
     ));
-    setFormData({
-      type: "surgery",
-      title: "",
-      date: new Date().toISOString().split("T")[0],
-      description: "",
-      location: "",
-      doctor: ""
-    });
+    setIsDialogOpen(false);
   };
 
   return (
-    <div className="min-h-screen bg-background p-4">
-      <div className="max-w-4xl mx-auto space-y-8">
-        <h1 className="text-2xl font-bold">MediCare - Evidence léčby</h1>
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
+      {/* Header */}
+      <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                <Activity className="h-6 w-6 text-primary-foreground" />
+              </div>
+              <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
+            </div>
+            <Button onClick={() => setIsDialogOpen(true)} size="lg" className="gap-2">
+              <Plus className="h-5 w-5" />
+              Přidat záznam
+            </Button>
+          </div>
+        </div>
+      </header>
 
-        {/* Formulář */}
-        <div className="border border-border p-4 rounded">
-          <h2 className="text-lg font-semibold mb-4">Přidat záznam</h2>
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8">
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card className="p-6 bg-card hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-medical-blue/10 flex items-center justify-center">
+                <Activity className="h-6 w-6 text-medical-blue" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Celkem záznamů</p>
+                <p className="text-2xl font-bold text-foreground">{events.length}</p>
+              </div>
+            </div>
+          </Card>
           
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="type">Typ</Label>
-                <Select 
-                  value={formData.type} 
-                  onValueChange={(value) => setFormData({ ...formData, type: value as HealthEvent["type"] })}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="surgery">Operace</SelectItem>
-                    <SelectItem value="medication">Léky</SelectItem>
-                    <SelectItem value="rehabilitation">Rehabilitace</SelectItem>
-                    <SelectItem value="document">Dokument</SelectItem>
-                    <SelectItem value="spa">Lázně</SelectItem>
-                  </SelectContent>
-                </Select>
+          <Card className="p-6 bg-card hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-medical-cyan/10 flex items-center justify-center">
+                <Pill className="h-6 w-6 text-medical-cyan" />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="date">Datum *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  required
-                  value={formData.date}
-                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                />
+              <div>
+                <p className="text-sm text-muted-foreground">Léky</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {events.filter(e => e.type === "medication").length}
+                </p>
               </div>
             </div>
+          </Card>
 
-            <div className="space-y-2">
-              <Label htmlFor="title">Název *</Label>
-              <Input
-                id="title"
-                required
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Např. Operace kolene"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="description">Popis</Label>
-              <Textarea
-                id="description"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Podrobnosti..."
-                rows={2}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="location">Místo</Label>
-                <Input
-                  id="location"
-                  value={formData.location}
-                  onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  placeholder="Nemocnice..."
-                />
+          <Card className="p-6 bg-card hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-success/10 flex items-center justify-center">
+                <FileText className="h-6 w-6 text-success" />
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="doctor">Lékař</Label>
-                <Input
-                  id="doctor"
-                  value={formData.doctor}
-                  onChange={(e) => setFormData({ ...formData, doctor: e.target.value })}
-                  placeholder="MUDr. ..."
-                />
+              <div>
+                <p className="text-sm text-muted-foreground">Dokumenty</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {events.filter(e => e.type === "document").length}
+                </p>
               </div>
             </div>
+          </Card>
 
-            <Button type="submit">Přidat záznam</Button>
-          </form>
+          <Card className="p-6 bg-card hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className="h-12 w-12 rounded-lg bg-warning/10 flex items-center justify-center">
+                <Calendar className="h-6 w-6 text-warning" />
+              </div>
+              <div>
+                <p className="text-sm text-muted-foreground">Operace</p>
+                <p className="text-2xl font-bold text-foreground">
+                  {events.filter(e => e.type === "surgery").length}
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
 
-        {/* Seznam záznamů */}
-        <div className="border border-border p-4 rounded">
-          <h2 className="text-lg font-semibold mb-4">
-            Časová osa ({events.length} záznamů)
-          </h2>
+        {/* Timeline */}
+        <Card className="p-6 bg-card">
+          <h2 className="text-xl font-semibold text-foreground mb-6">Časová osa léčby</h2>
           
           {events.length === 0 ? (
-            <p className="text-muted-foreground">Zatím žádné záznamy</p>
+            <div className="text-center py-12">
+              <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-muted-foreground mb-4">Zatím nemáte žádné záznamy</p>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Přidat první záznam
+              </Button>
+            </div>
           ) : (
-            <div className="space-y-3">
-              {events.map((event) => (
-                <div key={event.id} className="border border-border p-3 rounded">
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-semibold">{event.title}</span>
-                        <span className="text-xs px-2 py-1 bg-muted rounded">
-                          {typeLabels[event.type]}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {format(new Date(event.date), "d. MMMM yyyy", { locale: cs })}
-                      </p>
-                    </div>
-                  </div>
-                  
-                  {event.description && (
-                    <p className="text-sm mb-2">{event.description}</p>
-                  )}
-                  
-                  <div className="flex gap-4 text-sm text-muted-foreground">
-                    {event.location && <span>📍 {event.location}</span>}
-                    {event.doctor && <span>👨‍⚕️ {event.doctor}</span>}
-                  </div>
-                </div>
+            <div className="space-y-4">
+              {events.map((event, index) => (
+                <TimelineEvent 
+                  key={event.id} 
+                  event={event} 
+                  isLast={index === events.length - 1}
+                />
               ))}
             </div>
           )}
-        </div>
-      </div>
+        </Card>
+      </main>
+
+      <AddEventDialog 
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onAddEvent={handleAddEvent}
+      />
     </div>
   );
 };

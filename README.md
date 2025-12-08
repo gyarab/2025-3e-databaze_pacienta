@@ -1,55 +1,120 @@
-Welcome to your project
-Project info
+✅ README – Setup Frontend & Backend (lokální vývoj)
 
-How can I edit this code?
+Tento projekt aktuálně obsahuje frontend i backend v jedné složce. Níže je kompletní návod, jak spustit obě části aplikace na vašem počítači.
 
-Pokud preferuješ práci lokálně:
+🚀 1. Frontend Setup
 
-# 1. Naklonuj repozitář
+Frontend běží na JavaScriptovém vývojovém serveru (Vite).
+Pro jeho spuštění je potřeba mít Node.js + npm.
+
+📌 1.1. Instalace Node.js (doporučeno přes NVM)
+
+Doporučujeme nainstalovat Node.js pomocí nvm (Node Version Manager):
+
+🟦 macOS / Linux – instalace NVM:
+
+https://github.com/nvm-sh/nvm#installing-and-updating
+
+Po instalaci:
+
+nvm install --lts
+nvm use --lts
+
+🟦 Windows – instalace NVM-Windows:
+
+Použijte tento nástroj:
+https://github.com/coreybutler/nvm-windows/releases
+
+Po instalaci:
+
+nvm install lts
+nvm use lts
+
+
+Ověřte instalaci:
+
+node -v
+npm -v
+
+📌 1.2. Klonování repozitáře
+
+Pokud chcete pracovat lokálně:
+
 git clone <YOUR_GIT_URL>
-
-# 2. Vstup do složky projektu
 cd <YOUR_PROJECT_NAME>
 
-# 3. Nainstaluj závislosti
-npm i
+📌 1.3. Instalace frontend závislostí
+npm install
 
-# 4. Spusť vývojový server
+📌 1.4. Spuštění vývojového serveru
 npm run dev
 
 
-Je potřeba mít nainstalovaný Node.js a npm (doporučujeme instalaci přes nvm
-).
+Frontend běží defaultně na:
 
-Úprava souborů přímo na GitHubu
+http://localhost:5173
 
-Otevři požadovaný soubor.
+🐍 2. Backend Setup (Django)
 
-Klikni na ikonu tužky (Edit).
+Backend je vytvořen v Pythonu pomocí Django REST Framework.
 
-Proveď změny a commitni je.
+📌 2.1. Ověření Pythonu
 
-Použití GitHub Codespaces
+Doporučeno: Python 3.11+
 
-Na hlavní stránce repozitáře klikni na Code.
+python --version
 
-Otevři záložku Codespaces.
+📌 2.2. Vytvoření virtuálního prostředí
+python -m venv venv
 
-Klikni na New codespace.
+📌 2.3. Aktivace virtuálního prostředí
+🟦 Windows (PowerShell)
 
-Upravuj soubory přímo v cloudovém prostředí a commitni změny.
+Pokud se objeví chyba o zakázaných skriptech:
 
-What technologies are used in this project?
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 
-Projekt je postaven na:
 
-Vite
+Poté aktivace:
 
-TypeScript
+venv\Scripts\activate
 
-React
+🍏 macOS / Linux
+source venv/bin/activate
 
-shadcn-ui
+📌 2.4. Instalace backend závislostí
+pip install -r requirements.txt
 
-Tailwind CSS
+📌 2.5. Migrace databáze
+python manage.py migrate
 
+📌 2.6. Spuštění Django backend serveru
+python manage.py runserver
+
+
+Backend běží na:
+
+http://127.0.0.1:8000
+
+🔗 3. Jak spolu frontend a backend komunikují
+
+Frontend a backend se spouštějí zvlášť:
+
+Služba	Adresa
+Frontend	http://localhost:5173
+
+Backend	http://127.0.0.1:8000
+
+Frontend posílá HTTP požadavky na backend API.
+
+V produkci bude vše spojeno (například přes Docker nebo Nginx).
+
+🛠️ 4. Struktura projektu (dočasná)
+
+Momentálně jsou obě části v jedné složce.
+Později se doporučuje rozdělení:
+
+MediCare/
+ ├── backend/
+ ├── frontend/
+ └── README.md
