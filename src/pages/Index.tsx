@@ -7,10 +7,16 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Activity, FileText, Clock, Search, Shield, Sparkles } from "lucide-react";
+import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
+  const featuresRef = useRef<HTMLElement | null>(null);
+
+  const scrollToFeatures = () => {
+    featuresRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const features = [
     {
@@ -57,7 +63,7 @@ const Index = () => {
               </div>
               <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
             </div>
-            <Button onClick={() => navigate("/dashboard")} size="lg">
+            <Button onClick={() => navigate("/login")} size="lg">
               Začít
             </Button>
           </div>
@@ -84,11 +90,11 @@ const Index = () => {
           </p>
 
           <div className="flex gap-4 justify-center flex-wrap">
-            <Button size="lg" onClick={() => navigate("/dashboard")} className="gap-2">
+            <Button size="lg" onClick={() => navigate("/login")} className="gap-2">
               <Activity className="h-5 w-5" />
               Vyzkoušet zdarma
             </Button>
-            <Button size="lg" variant="outline">
+            <Button size="lg" variant="outline" onClick={scrollToFeatures}>
               Zjistit více
             </Button>
           </div>
@@ -96,7 +102,7 @@ const Index = () => {
       </section>
 
       {/* Features Grid */}
-      <section className="container mx-auto px-4 py-20">
+      <section ref={featuresRef} className="container mx-auto px-4 py-20">
         <div className="text-center mb-12">
           <h3 className="text-3xl font-bold text-foreground mb-4">
             Vše, co potřebujete pro správu zdraví
@@ -172,7 +178,7 @@ const Index = () => {
           <Button 
             size="lg" 
             variant="secondary"
-            onClick={() => navigate("/dashboard")}
+            onClick={() => navigate("/login")}
             className="gap-2"
           >
             <Activity className="h-5 w-5" />
