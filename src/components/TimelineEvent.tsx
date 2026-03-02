@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Activity, Pill, FileText, Stethoscope, Waves } from "lucide-react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
-import type { HealthEvent } from "@/pages/Dashboard";
+import type { HealthEvent } from "@/types/health";
 
 type TimelineEventProps = {
   event: HealthEvent;

@@ -1,0 +1,55 @@
+import type { AdminUserOverview, HealthEvent, UserProfile } from "@/types/health";
+
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api";
+const ACCESS_TOKEN_KEY = "medicare_access_token";
+
+export const getToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
+export const setToken = (token: string) => localStorage.setItem(ACCESS_TOKEN_KEY, token);
+export const clearToken = () => localStorage.removeItem(ACCESS_TOKEN_KEY);
+
+async function apiRequest<T>(path: string, options: RequestInit = {}, useAuth = true): Promise<T> {
+  const headers = new Headers(options.headers);
+  headers.set("Content-Type", "application/json");
+
+  if (useAuth) {
+    const token = getToken();
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`);
+    }
+  }
+
+  const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail ?? "Požadavek selhal");
+  }
+  return response.json();
+}
+
+export const login = async (username: string, password: string) => {
+  const data = await apiRequest<{ access: string; refresh: string }>(
+    "/users/token/",
+    {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    },
+    false,
+  );
+  setToken(data.access);
+};
+
+export const register = async (username: string, email: string, password: string) => {
+  await apiRequest("/users/register/", {
+    method: "POST",
+    body: JSON.stringify({ username, email, password }),
+  }, false);
+};
+
+export const getMe = () => apiRequest<UserProfile>("/users/me/");
+export const getEvents = () => apiRequest<HealthEvent[]>("/records/events/");
+export const createEvent = (event: Omit<HealthEvent, "id">) =>
+  apiRequest<HealthEvent>("/records/events/", {
+    method: "POST",
+    body: JSON.stringify(event),
+  });
+export const getAdminOverview = () => apiRequest<AdminUserOverview[]>("/users/admin-overview/");
