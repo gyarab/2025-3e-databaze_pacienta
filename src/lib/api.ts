@@ -7,6 +7,39 @@ export const getToken = () => localStorage.getItem(ACCESS_TOKEN_KEY);
 export const setToken = (token: string) => localStorage.setItem(ACCESS_TOKEN_KEY, token);
 export const clearToken = () => localStorage.removeItem(ACCESS_TOKEN_KEY);
 
+const toErrorMessage = (data: unknown): string => {
+  if (!data) {
+    return "Požadavek selhal";
+  }
+
+  if (typeof data === "string") {
+    return data;
+  }
+
+  if (typeof data !== "object") {
+    return "Požadavek selhal";
+  }
+
+  const payload = data as Record<string, unknown>;
+  if (typeof payload.detail === "string") {
+    return payload.detail;
+  }
+
+  const fieldErrors = Object.entries(payload)
+    .map(([field, value]) => {
+      if (Array.isArray(value)) {
+        return `${field}: ${value.join(", ")}`;
+      }
+      if (typeof value === "string") {
+        return `${field}: ${value}`;
+      }
+      return null;
+    })
+    .filter(Boolean) as string[];
+
+  return fieldErrors[0] ?? "Požadavek selhal";
+};
+
 async function apiRequest<T>(path: string, options: RequestInit = {}, useAuth = true): Promise<T> {
   const headers = new Headers(options.headers);
   headers.set("Content-Type", "application/json");
@@ -20,6 +53,8 @@ async function apiRequest<T>(path: string, options: RequestInit = {}, useAuth = 
 
   const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!response.ok) {
+    const data = await response.json().catch(() => null);
+    throw new Error(toErrorMessage(data));
     const data = await response.json().catch(() => ({}));
     throw new Error(data.detail ?? "Požadavek selhal");
   }
@@ -39,6 +74,14 @@ export const login = async (username: string, password: string) => {
 };
 
 export const register = async (username: string, email: string, password: string) => {
+  await apiRequest(
+    "/users/register/",
+    {
+      method: "POST",
+      body: JSON.stringify({ username, email, password }),
+    },
+    false,
+  );
   await apiRequest("/users/register/", {
     method: "POST",
     body: JSON.stringify({ username, email, password }),

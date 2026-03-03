@@ -17,12 +17,20 @@ const Login = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    if (isRegisterMode && password.length < 8) {
+      setError("Heslo musí mít alespoň 8 znaků.");
+      return;
+    }
+
     try {
       if (isRegisterMode) {
         await register(username, email, password);
       }
       await login(username, password);
       navigate("/dashboard");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Přihlášení/registrace selhala.");
     } catch {
       setError("Přihlášení/registrace selhala. Zkontrolujte údaje.");
     }
@@ -45,6 +53,9 @@ const Login = () => {
           )}
           <div>
             <Label htmlFor="password">Heslo</Label>
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={isRegisterMode ? 8 : 1} />
+          </div>
+          {isRegisterMode && <p className="text-xs text-muted-foreground">Pro registraci je potřeba heslo min. 8 znaků.</p>}
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
