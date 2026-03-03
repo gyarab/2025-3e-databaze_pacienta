@@ -31,6 +31,8 @@ const Login = () => {
       navigate("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Přihlášení/registrace selhala.");
+    } catch {
+      setError("Přihlášení/registrace selhala. Zkontrolujte údaje.");
     }
   };
 
@@ -54,6 +56,8 @@ const Login = () => {
             <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={isRegisterMode ? 8 : 1} />
           </div>
           {isRegisterMode && <p className="text-xs text-muted-foreground">Pro registraci je potřeba heslo min. 8 znaků.</p>}
+            <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          </div>
           {error && <p className="text-sm text-destructive">{error}</p>}
           <Button type="submit" className="w-full">{isRegisterMode ? "Registrovat a přihlásit" : "Přihlásit"}</Button>
         </form>

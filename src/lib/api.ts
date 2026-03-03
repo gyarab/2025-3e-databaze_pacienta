@@ -55,6 +55,8 @@ async function apiRequest<T>(path: string, options: RequestInit = {}, useAuth = 
   if (!response.ok) {
     const data = await response.json().catch(() => null);
     throw new Error(toErrorMessage(data));
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.detail ?? "Požadavek selhal");
   }
   return response.json();
 }
@@ -80,6 +82,10 @@ export const register = async (username: string, email: string, password: string
     },
     false,
   );
+  await apiRequest("/users/register/", {
+    method: "POST",
+    body: JSON.stringify({ username, email, password }),
+  }, false);
 };
 
 export const getMe = () => apiRequest<UserProfile>("/users/me/");
