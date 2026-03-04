@@ -1,13 +1,15 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Activity, Pill, FileText, Stethoscope, Waves } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, Pencil, Pill, FileText, Stethoscope, Waves } from "lucide-react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
-import type { HealthEvent } from "@/pages/Dashboard";
+import type { HealthEvent } from "@/types/health";
 
 type TimelineEventProps = {
   event: HealthEvent;
   isLast: boolean;
+  onEdit: (event: HealthEvent) => void;
 };
 
 const eventIcons = {
@@ -15,7 +17,7 @@ const eventIcons = {
   medication: Pill,
   rehabilitation: Stethoscope,
   document: FileText,
-  spa: Waves
+  spa: Waves,
 };
 
 const eventColors = {
@@ -23,7 +25,7 @@ const eventColors = {
   medication: "bg-medical-cyan/10 text-medical-cyan border-medical-cyan/20",
   rehabilitation: "bg-success/10 text-success border-success/20",
   document: "bg-medical-blue/10 text-medical-blue border-medical-blue/20",
-  spa: "bg-accent/10 text-accent border-accent/20"
+  spa: "bg-accent/10 text-accent border-accent/20",
 };
 
 const eventLabels = {
@@ -31,25 +33,21 @@ const eventLabels = {
   medication: "Léky",
   rehabilitation: "Rehabilitace",
   document: "Dokument",
-  spa: "Lázně"
+  spa: "Lázně",
 };
 
-export const TimelineEvent = ({ event, isLast }: TimelineEventProps) => {
+export const TimelineEvent = ({ event, isLast, onEdit }: TimelineEventProps) => {
   const Icon = eventIcons[event.type];
-  
+
   return (
     <div className="flex gap-4 group">
-      {/* Timeline indicator */}
       <div className="flex flex-col items-center">
         <div className={`h-12 w-12 rounded-xl ${eventColors[event.type]} flex items-center justify-center border-2 shadow-sm transition-all group-hover:scale-110`}>
           <Icon className="h-6 w-6" />
         </div>
-        {!isLast && (
-          <div className="w-0.5 h-full min-h-[2rem] bg-border mt-2" />
-        )}
+        {!isLast && <div className="w-0.5 h-full min-h-[2rem] bg-border mt-2" />}
       </div>
 
-      {/* Event content */}
       <Card className="flex-1 p-4 mb-4 hover:shadow-md transition-all group-hover:border-primary/50">
         <div className="flex items-start justify-between gap-4 mb-2">
           <div className="flex-1">
@@ -59,23 +57,18 @@ export const TimelineEvent = ({ event, isLast }: TimelineEventProps) => {
                 {eventLabels[event.type]}
               </Badge>
             </div>
-            <p className="text-sm text-muted-foreground">
-              {format(new Date(event.date), "d. MMMM yyyy", { locale: cs })}
-            </p>
+            <p className="text-sm text-muted-foreground">{format(new Date(event.date), "d. MMMM yyyy", { locale: cs })}</p>
           </div>
+          <Button variant="outline" size="sm" onClick={() => onEdit(event)}>
+            <Pencil className="h-4 w-4 mr-1" /> Upravit
+          </Button>
         </div>
-        
-        {event.description && (
-          <p className="text-foreground mb-2">{event.description}</p>
-        )}
-        
+
+        {event.description && <p className="text-foreground mb-2">{event.description}</p>}
+
         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-          {event.location && (
-            <span>📍 {event.location}</span>
-          )}
-          {event.doctor && (
-            <span>👨‍⚕️ {event.doctor}</span>
-          )}
+          {event.location && <span>📍 {event.location}</span>}
+          {event.doctor && <span>👨‍⚕️ {event.doctor}</span>}
         </div>
       </Card>
     </div>
