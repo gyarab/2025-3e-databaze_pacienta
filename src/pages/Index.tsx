@@ -63,6 +63,7 @@ const Index = () => {
               </div>
               <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
             </button>
+            </div>
             <Button onClick={() => navigate("/login")} size="lg">
               Začít
             </Button>

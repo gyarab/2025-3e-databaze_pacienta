@@ -13,6 +13,7 @@ from users.serializers import (
     RegisterSerializer,
     UserSummarySerializer,
 )
+from users.serializers import MeSerializer, RegisterSerializer, UserSummarySerializer
 
 
 class RegisterView(generics.CreateAPIView):

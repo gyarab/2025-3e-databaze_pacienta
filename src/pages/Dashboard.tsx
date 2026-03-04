@@ -23,6 +23,12 @@ import {
   updateProfile,
   uploadDocument,
 } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Plus, FileText, Pill, Activity, Calendar } from "lucide-react";
+import { TimelineEvent } from "@/components/TimelineEvent";
+import { AddEventDialog } from "@/components/AddEventDialog";
+import { clearToken, createEvent, getAdminOverview, getEvents, getMe, getToken } from "@/lib/api";
 import type { AdminUserOverview, HealthEvent, UserProfile } from "@/types/health";
 
 const Dashboard = () => {
@@ -53,6 +59,18 @@ const Dashboard = () => {
         setUser(me);
         setEvents(fetchedEvents);
         setProfile(fetchedProfile);
+
+  useEffect(() => {
+    if (!getToken()) {
+      navigate("/login");
+      return;
+    }
+
+    const loadData = async () => {
+      try {
+        const [me, fetchedEvents] = await Promise.all([getMe(), getEvents()]);
+        setUser(me);
+        setEvents(fetchedEvents);
 
         if (me.is_staff) {
           const overview = await getAdminOverview();
@@ -115,12 +133,26 @@ const Dashboard = () => {
     }
   };
 
+  const handleAddEvent = async (newEvent: Omit<HealthEvent, "id">) => {
+    try {
+      const event = await createEvent(newEvent);
+      setEvents((prev) => [event, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      setIsDialogOpen(false);
+      setError("");
+    } catch {
+      setError("Nepodařilo se uložit záznam do databáze.");
+    }
+  };
+
   const handleLogout = () => {
     clearToken();
     navigate("/login");
   };
 
   if (isLoading) return <div className="p-8 text-center">Načítám data…</div>;
+  if (isLoading) {
+    return <div className="p-8 text-center">Načítám data…</div>;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
@@ -159,6 +191,12 @@ const Dashboard = () => {
                   <DropdownMenuItem onClick={handleLogout}>Odhlásit se</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+            <div className="flex gap-2">
+              <Button onClick={() => setIsDialogOpen(true)} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" />
+                Přidat záznam
+              </Button>
+              <Button variant="outline" onClick={handleLogout}>Odhlásit</Button>
             </div>
           </div>
         </div>
@@ -202,6 +240,7 @@ const Dashboard = () => {
                     setIsDialogOpen(true);
                   }}
                 />
+                <TimelineEvent key={event.id} event={event} isLast={index === events.length - 1} />
               ))}
             </div>
           )}
@@ -253,6 +292,7 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
+      <AddEventDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onAddEvent={handleAddEvent} />
     </div>
   );
 };
