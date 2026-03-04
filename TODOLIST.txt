@@ -1,3 +1,1 @@
-- udelat zpetnou navigaci na homepage, kdyz kliknete na logo MediCare
-
 - vymyslet nazev, neco podobnyho jako MediCare, ale at je to originalni.
