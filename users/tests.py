@@ -51,3 +51,24 @@ class UsersApiTests(APITestCase):
         alice_entry = next((item for item in response.data if item["username"] == "alice"), None)
         self.assertIsNotNone(alice_entry)
         self.assertEqual(alice_entry["event_count"], 1)
+
+    def test_profile_update_and_change_password(self):
+        user = get_user_model().objects.create_user(username="eva", password="old-pass-123")
+        self.client.force_authenticate(user)
+
+        profile_response = self.client.patch(
+            reverse("profile"),
+            {"height_cm": 172, "weight_kg": 68, "national_id": "010101/1234"},
+            format="json",
+        )
+        self.assertEqual(profile_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(profile_response.data["height_cm"], 172)
+
+        password_response = self.client.post(
+            reverse("change_password"),
+            {"old_password": "old-pass-123", "new_password": "new-pass-123"},
+            format="json",
+        )
+        self.assertEqual(password_response.status_code, status.HTTP_200_OK)
+        user.refresh_from_db()
+        self.assertTrue(user.check_password("new-pass-123"))

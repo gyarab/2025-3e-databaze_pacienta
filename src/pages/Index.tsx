@@ -57,11 +57,12 @@ const Index = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+            <button className="flex items-center gap-3" onClick={() => navigate("/")}>
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <Activity className="h-6 w-6 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
+            </button>
             </div>
             <Button onClick={() => navigate("/login")} size="lg">
               Začít
