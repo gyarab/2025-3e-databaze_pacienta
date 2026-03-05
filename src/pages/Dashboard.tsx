@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Activity, Plus, UserCircle2 } from "lucide-react";
+import { Activity, Plus, UserCircle2, FileText, Pill, Calendar } from "lucide-react";
 import {
   changePassword,
   clearToken,
@@ -22,13 +22,8 @@ import {
   updateEvent,
   updateProfile,
   uploadDocument,
+  getDocuments,
 } from "@/lib/api";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Plus, FileText, Pill, Activity, Calendar } from "lucide-react";
-import { TimelineEvent } from "@/components/TimelineEvent";
-import { AddEventDialog } from "@/components/AddEventDialog";
-import { clearToken, createEvent, getAdminOverview, getEvents, getMe, getToken } from "@/lib/api";
 import type { AdminUserOverview, HealthEvent, UserProfile } from "@/types/health";
 
 const Dashboard = () => {
@@ -39,6 +34,9 @@ const Dashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<UserProfile | null>(null);
   const [adminOverview, setAdminOverview] = useState<AdminUserOverview[]>([]);
+  const [documentsMap, setDocumentsMap] = useState<Record<string, import("@/types/health").DocumentRecord[]>>({});
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const [viewerDoc, setViewerDoc] = useState<import("@/types/health").DocumentRecord | null>(null);
   const [error, setError] = useState("");
 
   const [profileOpen, setProfileOpen] = useState(false);
@@ -55,19 +53,6 @@ const Dashboard = () => {
 
     const loadData = async () => {
       try {
-        const [me, fetchedEvents, fetchedProfile] = await Promise.all([getMe(), getEvents(), getProfile()]);
-        setUser(me);
-        setEvents(fetchedEvents);
-        setProfile(fetchedProfile);
-
-  useEffect(() => {
-    if (!getToken()) {
-      navigate("/login");
-      return;
-    }
-
-    const loadData = async () => {
-      try {
         const [me, fetchedEvents] = await Promise.all([getMe(), getEvents()]);
         setUser(me);
         setEvents(fetchedEvents);
@@ -75,6 +60,19 @@ const Dashboard = () => {
         if (me.is_staff) {
           const overview = await getAdminOverview();
           setAdminOverview(overview);
+        }
+        // fetch documents and map them by medical_event id
+        try {
+          const docs = await getDocuments();
+          const map: Record<string, import("@/types/health").DocumentRecord[]> = {};
+          docs.forEach((d) => {
+            const key = d.medical_event ?? "";
+            if (!map[key]) map[key] = [];
+            map[key].push(d);
+          });
+          setDocumentsMap(map);
+        } catch (e) {
+          // ignore documents fetching errors
         }
       } catch {
         clearToken();
@@ -99,7 +97,18 @@ const Dashboard = () => {
       }
 
       if (file) {
-        await uploadDocument(file.name, file, savedEvent.id);
+        try {
+          const created = await uploadDocument(file.name, file, savedEvent.id);
+          // merge created document into documentsMap for this event
+          setDocumentsMap((prev) => {
+            const key = String(savedEvent.id ?? "");
+            const next = { ...prev } as Record<string, import("@/types/health").DocumentRecord[]>;
+            next[key] = [...(next[key] ?? []), created];
+            return next;
+          });
+        } catch (e) {
+          // ignore upload errors here (already handled above)
+        }
       }
 
       setIsDialogOpen(false);
@@ -133,16 +142,7 @@ const Dashboard = () => {
     }
   };
 
-  const handleAddEvent = async (newEvent: Omit<HealthEvent, "id">) => {
-    try {
-      const event = await createEvent(newEvent);
-      setEvents((prev) => [event, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-      setIsDialogOpen(false);
-      setError("");
-    } catch {
-      setError("Nepodařilo se uložit záznam do databáze.");
-    }
-  };
+  
 
   const handleLogout = () => {
     clearToken();
@@ -191,13 +191,8 @@ const Dashboard = () => {
                   <DropdownMenuItem onClick={handleLogout}>Odhlásit se</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            <div className="flex gap-2">
-              <Button onClick={() => setIsDialogOpen(true)} size="lg" className="gap-2">
-                <Plus className="h-5 w-5" />
-                Přidat záznam
-              </Button>
-              <Button variant="outline" onClick={handleLogout}>Odhlásit</Button>
             </div>
+            {/* profile + add button are in the previous group; removed duplicate add and separate logout button */}
           </div>
         </div>
       </header>
@@ -230,18 +225,22 @@ const Dashboard = () => {
             </div>
           ) : (
             <div className="space-y-4">
-              {events.map((event, index) => (
-                <TimelineEvent
-                  key={event.id}
-                  event={event}
-                  isLast={index === events.length - 1}
-                  onEdit={(selectedEvent) => {
-                    setEditingEvent(selectedEvent);
-                    setIsDialogOpen(true);
-                  }}
-                />
-                <TimelineEvent key={event.id} event={event} isLast={index === events.length - 1} />
-              ))}
+                    {events.map((event, index) => (
+                      <TimelineEvent
+                        key={event.id}
+                        event={event}
+                        isLast={index === events.length - 1}
+                        onEdit={(selectedEvent) => {
+                          setEditingEvent(selectedEvent);
+                          setIsDialogOpen(true);
+                        }}
+                        documents={documentsMap[event.id] ?? []}
+                        onOpenDocument={(d) => {
+                          setViewerDoc(d);
+                          setViewerOpen(true);
+                        }}
+                      />
+                    ))}
             </div>
           )}
         </Card>
@@ -261,7 +260,6 @@ const Dashboard = () => {
         )}
       </main>
 
-      <AddEventDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onAddEvent={handleSaveEvent} initialEvent={editingEvent} />
 
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
         <DialogContent>
@@ -292,7 +290,25 @@ const Dashboard = () => {
           </div>
         </DialogContent>
       </Dialog>
-      <AddEventDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onAddEvent={handleAddEvent} />
+      <AddEventDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onAddEvent={handleSaveEvent} initialEvent={editingEvent} />
+
+      {/* Document viewer dialog */}
+      <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
+        <DialogContent className="sm:max-w-4xl w-full">
+          <DialogHeader>
+            <DialogTitle>{viewerDoc?.title ?? "Dokument"}</DialogTitle>
+          </DialogHeader>
+          <div className="h-[70vh]">
+            {viewerDoc ? (
+              (viewerDoc.file.endsWith(".png") || viewerDoc.file.endsWith(".jpg") || viewerDoc.file.endsWith(".jpeg") || viewerDoc.file.endsWith(".gif")) ? (
+                <img src={viewerDoc.file} alt={viewerDoc.title} className="max-h-[70vh] w-full object-contain" />
+              ) : (
+                <iframe src={viewerDoc.file} title={viewerDoc.title} className="w-full h-full border-0" />
+              )
+            ) : null}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

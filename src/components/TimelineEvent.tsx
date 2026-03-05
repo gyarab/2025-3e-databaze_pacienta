@@ -4,12 +4,14 @@ import { Button } from "@/components/ui/button";
 import { Activity, Pencil, Pill, FileText, Stethoscope, Waves } from "lucide-react";
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
-import type { HealthEvent } from "@/types/health";
+import type { HealthEvent, DocumentRecord } from "@/types/health";
 
 type TimelineEventProps = {
   event: HealthEvent;
   isLast: boolean;
   onEdit: (event: HealthEvent) => void;
+  documents?: DocumentRecord[];
+  onOpenDocument?: (doc: DocumentRecord) => void;
 };
 
 const eventIcons = {
@@ -36,7 +38,7 @@ const eventLabels = {
   spa: "Lázně",
 };
 
-export const TimelineEvent = ({ event, isLast, onEdit }: TimelineEventProps) => {
+export const TimelineEvent = ({ event, isLast, onEdit, documents = [], onOpenDocument }: TimelineEventProps) => {
   const Icon = eventIcons[event.type];
 
   return (
@@ -65,6 +67,21 @@ export const TimelineEvent = ({ event, isLast, onEdit }: TimelineEventProps) => 
         </div>
 
         {event.description && <p className="text-foreground mb-2">{event.description}</p>}
+
+        {documents.length > 0 && (
+          <div className="mt-3 flex flex-col gap-2">
+            {documents.map((d) => (
+              <button
+                key={d.id}
+                type="button"
+                onClick={() => onOpenDocument?.(d)}
+                className="text-sm text-primary underline text-left"
+              >
+                📎 {d.title}
+              </button>
+            ))}
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
           {event.location && <span>📍 {event.location}</span>}
