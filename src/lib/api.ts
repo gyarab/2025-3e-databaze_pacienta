@@ -23,39 +23,13 @@ const toErrorMessage = (data: unknown): string => {
   if (typeof data === "string") return data;
   if (typeof data !== "object") return "Požadavek selhal";
 
-  const payload = data as Record<string, unknown>;
+  const payload = data as Record<string, any>;
   if (typeof payload.detail === "string") return payload.detail;
 
   const fieldErrors = Object.entries(payload)
     .map(([field, value]) => {
       if (Array.isArray(value)) return `${field}: ${value.join(", ")}`;
       if (typeof value === "string") return `${field}: ${value}`;
-const toErrorMessage = (data: unknown): string => {
-  if (!data) {
-    return "Požadavek selhal";
-  }
-
-  if (typeof data === "string") {
-    return data;
-  }
-
-  if (typeof data !== "object") {
-    return "Požadavek selhal";
-  }
-
-  const payload = data as Record<string, unknown>;
-  if (typeof payload.detail === "string") {
-    return payload.detail;
-  }
-
-  const fieldErrors = Object.entries(payload)
-    .map(([field, value]) => {
-      if (Array.isArray(value)) {
-        return `${field}: ${value.join(", ")}`;
-      }
-      if (typeof value === "string") {
-        return `${field}: ${value}`;
-      }
       return null;
     })
     .filter(Boolean) as string[];
@@ -64,7 +38,9 @@ const toErrorMessage = (data: unknown): string => {
 };
 
 async function apiRequest<T>(path: string, options: RequestInit = {}, useAuth = true): Promise<T> {
-  const headers = new Headers(options.headers);
+  const headers = new Headers(options.headers as HeadersInit | undefined);
+
+  // Don't set JSON content-type for FormData bodies
   if (!(options.body instanceof FormData)) {
     headers.set("Content-Type", "application/json");
   }
@@ -72,13 +48,6 @@ async function apiRequest<T>(path: string, options: RequestInit = {}, useAuth = 
   if (useAuth) {
     const token = getToken();
     if (token) headers.set("Authorization", `Bearer ${token}`);
-  headers.set("Content-Type", "application/json");
-
-  if (useAuth) {
-    const token = getToken();
-    if (token) {
-      headers.set("Authorization", `Bearer ${token}`);
-    }
   }
 
   const response = await fetch(`${API_BASE}${path}`, { ...options, headers });
@@ -86,10 +55,8 @@ async function apiRequest<T>(path: string, options: RequestInit = {}, useAuth = 
     const data = await response.json().catch(() => null);
     throw new Error(toErrorMessage(data));
   }
-  return response.status === 204 ? ({} as T) : response.json();
-    const data = await response.json().catch(() => ({}));
-    throw new Error(data.detail ?? "Požadavek selhal");
-  }
+
+  if (response.status === 204) return ({} as T);
   return response.json();
 }
 
@@ -97,29 +64,14 @@ export const login = async (username: string, password: string) => {
   const data = await apiRequest<{ access: string; refresh: string }>(
     "/users/token/",
     { method: "POST", body: JSON.stringify({ username, password }) },
-    {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-    },
-    false,
+    false
   );
   setToken(data.access);
+  return data;
 };
 
 export const register = async (username: string, email: string, password: string) => {
   await apiRequest("/users/register/", { method: "POST", body: JSON.stringify({ username, email, password }) }, false);
-  await apiRequest(
-    "/users/register/",
-    {
-      method: "POST",
-      body: JSON.stringify({ username, email, password }),
-    },
-    false,
-  );
-  await apiRequest("/users/register/", {
-    method: "POST",
-    body: JSON.stringify({ username, email, password }),
-  }, false);
 };
 
 export const getMe = () => apiRequest<UserProfile>("/users/me/");
@@ -137,6 +89,8 @@ export const uploadDocument = async (title: string, file: File, medicalEventId?:
   return apiRequest("/documents/", { method: "POST", body: form });
 };
 
+export const getDocuments = () => apiRequest<DocumentRecord[]>("/documents/");
+
 export const getProfile = () => apiRequest<PatientProfile>("/users/profile/");
 export const updateProfile = (data: PatientProfile) => apiRequest<PatientProfile>("/users/profile/", { method: "PATCH", body: JSON.stringify(data) });
 export const changePassword = (oldPassword: string, newPassword: string) =>
@@ -145,8 +99,4 @@ export const changePassword = (oldPassword: string, newPassword: string) =>
     body: JSON.stringify({ old_password: oldPassword, new_password: newPassword }),
   });
 
-  apiRequest<HealthEvent>("/records/events/", {
-    method: "POST",
-    body: JSON.stringify(event),
-  });
 export const getAdminOverview = () => apiRequest<AdminUserOverview[]>("/users/admin-overview/");

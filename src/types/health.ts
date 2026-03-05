@@ -20,3 +20,10 @@ export type AdminUserOverview = {
   email: string;
   event_count: number;
 };
+
+export type DocumentRecord = {
+  id: string;
+  title: string;
+  file: string;
+  medical_event: string | null;
+};

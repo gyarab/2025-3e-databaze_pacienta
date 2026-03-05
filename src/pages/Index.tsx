@@ -63,7 +63,6 @@ const Index = () => {
               </div>
               <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
             </button>
-            </div>
             <Button onClick={() => navigate("/login")} size="lg">
               Začít
             </Button>
@@ -193,7 +192,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-8">
           <div className="flex items-center justify-center gap-3 text-muted-foreground">
             <Activity className="h-5 w-5 text-primary" />
-            <span>© 2024 MediCare. Vaše zdraví, vaše data.</span>
+            <span>© 2026 MediCare. Vaše zdraví, vaše data.</span>
           </div>
         </div>
       </footer>
