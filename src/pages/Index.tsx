@@ -6,12 +6,14 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Activity, FileText, Clock, Search, Shield, Sparkles } from "lucide-react";
+import { Activity, FileText, Clock, Search, Shield, Sparkles, Globe } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
+  const { toggle, t, setLang } = useI18n();
   const featuresRef = useRef<HTMLElement | null>(null);
 
   const scrollToFeatures = () => {
@@ -19,36 +21,12 @@ const Index = () => {
   };
 
   const features = [
-    {
-      icon: Clock,
-      title: "Časová osa",
-      description: "Přehledné zobrazení všech zdravotních událostí v chronologickém pořadí"
-    },
-    {
-      icon: FileText,
-      title: "Dokumenty",
-      description: "Nahrávejte a organizujte lékařské zprávy na jednom místě"
-    },
-    {
-      icon: Search,
-      title: "Vyhledávání",
-      description: "Rychle najděte potřebné informace o léčbě nebo lécích"
-    },
-    {
-      icon: Shield,
-      title: "Bezpečnost",
-      description: "Vaše data jsou chráněna a přístupná pouze vám"
-    },
-    {
-      icon: Activity,
-      title: "Komplexní evidence",
-      description: "Operace, léky, rehabilitace i lázně na jednom místě"
-    },
-    {
-      icon: Sparkles,
-      title: "Budoucnost",
-      description: "Brzy s AI asistentem pro automatické třídění a odpovědi"
-    }
+    { icon: Clock, title: t("feature1_title"), description: t("feature1_description") },
+    { icon: FileText, title: t("feature2_title"), description: t("feature2_description") },
+    { icon: Search, title: t("feature3_title"), description: t("feature3_description") },
+    { icon: Shield, title: t("feature4_title"), description: t("feature4_description") },
+    { icon: Activity, title: t("feature5_title"), description: t("feature5_description") },
+    { icon: Sparkles, title: t("feature6_title"), description: t("feature6_description") },
   ];
 
   return (
@@ -57,12 +35,28 @@ const Index = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <button className="flex items-center gap-3" onClick={() => navigate("/")}>
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-3" onClick={() => {
+              // smooth scroll to top when already on the page instead of full navigation reload
+              if (window.location.pathname === "/") {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              } else {
+                navigate("/");
+              }
+            }}>
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <Activity className="h-6 w-6 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
             </button>
+              <div className="flex items-center gap-2">
+                <button title="Čeština" onClick={() => setLang("cs")} className="text-lg">🇨🇿</button>
+                <button title="English" onClick={() => setLang("en")} className="text-lg">🇬🇧</button>
+                <Button variant="ghost" size="icon" onClick={() => { toggle(); }} aria-label="Toggle language">
+                  <Globe className="h-5 w-5" />
+                </Button>
+              </div>
+            </div>
             <Button onClick={() => navigate("/login")} size="lg">
               Začít
             </Button>
@@ -73,29 +67,27 @@ const Index = () => {
       {/* Hero Section */}
       <section className="container mx-auto px-4 py-20 text-center">
         <div className="max-w-3xl mx-auto space-y-8">
-          <div className="inline-block">
+            <div className="inline-block">
             <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary to-accent flex items-center justify-center mx-auto mb-6 shadow-lg">
               <Activity className="h-10 w-10 text-primary-foreground" />
             </div>
           </div>
           
           <h2 className="text-4xl md:text-5xl font-bold text-foreground leading-tight">
-            Mějte svou zdravotní historii
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent"> pod kontrolou</span>
+            {t("appName")} <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">{t("start")}</span>
           </h2>
-          
+
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-            Jednoduše organizujte lékařské zprávy, operace, léky a rehabilitace. 
-            Vše na jednom místě, přehledně v časové ose.
+            {t("feature2_description")}
           </p>
 
           <div className="flex gap-4 justify-center flex-wrap">
             <Button size="lg" onClick={() => navigate("/login")} className="gap-2">
               <Activity className="h-5 w-5" />
-              Vyzkoušet zdarma
+              {t("tryFree")}
             </Button>
             <Button size="lg" variant="outline" onClick={scrollToFeatures}>
-              Zjistit více
+              {t("learnMore")}
             </Button>
           </div>
         </div>

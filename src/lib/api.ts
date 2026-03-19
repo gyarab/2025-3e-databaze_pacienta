@@ -1,4 +1,4 @@
-import type { AdminUserOverview, HealthEvent, UserProfile } from "@/types/health";
+import type { AdminUserOverview, HealthEvent, UserProfile, DocumentRecord } from "@/types/health";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000/api";
 const ACCESS_TOKEN_KEY = "medicare_access_token";
@@ -80,6 +80,8 @@ export const createEvent = (event: Omit<HealthEvent, "id">) =>
   apiRequest<HealthEvent>("/records/events/", { method: "POST", body: JSON.stringify(event) });
 export const updateEvent = (id: string, event: Omit<HealthEvent, "id">) =>
   apiRequest<HealthEvent>(`/records/events/${id}/`, { method: "PUT", body: JSON.stringify(event) });
+
+export const deleteEvent = (id: string) => apiRequest<void>(`/records/events/${id}/`, { method: "DELETE" });
 
 export const uploadDocument = async (title: string, file: File, medicalEventId?: string) => {
   const form = new FormData();

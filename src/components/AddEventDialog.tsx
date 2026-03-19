@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useI18n } from "@/lib/i18n";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,6 +15,9 @@ type AddEventDialogProps = {
   onOpenChange: (open: boolean) => void;
   onAddEvent: (event: EventFormData, file: File | null) => Promise<void>;
   initialEvent?: HealthEvent | null;
+  existingDocuments?: Array<{ id: string; title: string; file: string }>;
+  onDeleteDocument?: (id: string) => Promise<void>;
+  onDeleteRecord?: (id: string) => Promise<void>;
 };
 
 const defaultFormData = (): EventFormData => ({
@@ -25,9 +29,10 @@ const defaultFormData = (): EventFormData => ({
   doctor: "",
 });
 
-export const AddEventDialog = ({ open, onOpenChange, onAddEvent, initialEvent }: AddEventDialogProps) => {
+export const AddEventDialog = ({ open, onOpenChange, onAddEvent, initialEvent, existingDocuments = [], onDeleteDocument, onDeleteRecord }: AddEventDialogProps) => {
   const [formData, setFormData] = useState<EventFormData>(defaultFormData());
   const [attachment, setAttachment] = useState<File | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     if (initialEvent) {
@@ -57,7 +62,7 @@ export const AddEventDialog = ({ open, onOpenChange, onAddEvent, initialEvent }:
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>{initialEvent ? "Upravit záznam" : "Přidat nový záznam"}</DialogTitle>
+          <DialogTitle>{initialEvent ? t("editRecord") : t("createRecord")}</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -71,11 +76,11 @@ export const AddEventDialog = ({ open, onOpenChange, onAddEvent, initialEvent }:
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="surgery">Operace</SelectItem>
-                <SelectItem value="medication">Léky</SelectItem>
-                <SelectItem value="rehabilitation">Rehabilitace</SelectItem>
-                <SelectItem value="document">Dokument</SelectItem>
-                <SelectItem value="spa">Lázně</SelectItem>
+                <SelectItem value="surgery">{t("surgery")}</SelectItem>
+                <SelectItem value="medication">{t("medication_label")}</SelectItem>
+                <SelectItem value="rehabilitation">{t("rehabilitation")}</SelectItem>
+                <SelectItem value="document">{t("documents")}</SelectItem>
+                <SelectItem value="spa">{t("spa")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -106,16 +111,50 @@ export const AddEventDialog = ({ open, onOpenChange, onAddEvent, initialEvent }:
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="attachment">Příloha (PDF / obrázek)</Label>
+            <Label htmlFor="attachment">{t("attachment")}</Label>
             <Input id="attachment" type="file" accept="application/pdf,image/*" onChange={(e) => setAttachment(e.target.files?.[0] ?? null)} />
           </div>
 
+          {initialEvent && (
+            <div className="space-y-2">
+              <Label>{t("existingAttachments")}</Label>
+              <div className="space-y-1">
+                {existingDocuments.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t("existingAttachments")}: 0</p>
+                ) : (
+                  existingDocuments.map((d) => (
+                    <div key={d.id} className="flex items-center justify-between">
+                      <a href={d.file} target="_blank" rel="noreferrer" className="text-sm text-primary underline">📎 {d.title}</a>
+                      {onDeleteDocument && (
+                        <Button size="sm" variant="ghost" onClick={() => onDeleteDocument(d.id)}>{t("delete")}</Button>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="flex gap-3 pt-4">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
-              Zrušit
+              {t("cancel")}
             </Button>
+            {initialEvent && (
+              <Button
+                type="button"
+                variant="destructive"
+                onClick={async () => {
+                  const ok = window.confirm("Opravdu chcete smazat celý záznam? Tuto akci nelze vrátit.");
+                  if (!ok || !initialEvent) return;
+                  if (onDeleteRecord) await onDeleteRecord(initialEvent.id);
+                  onOpenChange(false);
+                }}
+              >
+                {t("delete")}
+              </Button>
+            )}
             <Button type="submit" className="flex-1">
-              {initialEvent ? "Uložit změny" : "Přidat záznam"}
+              {initialEvent ? t("saveChanges") : t("createRecord")}
             </Button>
           </div>
         </form>

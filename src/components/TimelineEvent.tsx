@@ -5,6 +5,7 @@ import { Activity, Pencil, Pill, FileText, Stethoscope, Waves } from "lucide-rea
 import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import type { HealthEvent, DocumentRecord } from "@/types/health";
+import { useI18n } from "@/lib/i18n";
 
 type TimelineEventProps = {
   event: HealthEvent;
@@ -30,16 +31,18 @@ const eventColors = {
   spa: "bg-accent/10 text-accent border-accent/20",
 };
 
-const eventLabels = {
-  surgery: "Operace",
-  medication: "Léky",
-  rehabilitation: "Rehabilitace",
-  document: "Dokument",
-  spa: "Lázně",
-};
+const eventLabels = (t: (k: string) => string) => ({
+  surgery: t("surgery"),
+  medication: t("medication_label"),
+  rehabilitation: t("rehabilitation"),
+  document: t("documents"),
+  spa: t("spa"),
+});
 
 export const TimelineEvent = ({ event, isLast, onEdit, documents = [], onOpenDocument }: TimelineEventProps) => {
   const Icon = eventIcons[event.type];
+  const { t } = useI18n();
+  const labels = eventLabels(t);
 
   return (
     <div className="flex gap-4 group">
@@ -55,8 +58,8 @@ export const TimelineEvent = ({ event, isLast, onEdit, documents = [], onOpenDoc
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-semibold text-foreground text-lg">{event.title}</h3>
-              <Badge variant="outline" className={eventColors[event.type]}>
-                {eventLabels[event.type]}
+                        <Badge variant="outline" className={eventColors[event.type]}>
+                {labels[event.type]}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">{format(new Date(event.date), "d. MMMM yyyy", { locale: cs })}</p>

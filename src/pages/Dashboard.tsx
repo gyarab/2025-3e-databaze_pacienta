@@ -8,7 +8,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Activity, Plus, UserCircle2, FileText, Pill, Calendar } from "lucide-react";
+import { Activity, Plus, UserCircle2, FileText, Pill, Calendar, Globe } from "lucide-react";
+import { useI18n } from "@/lib/i18n";
 import {
   changePassword,
   clearToken,
@@ -23,12 +24,14 @@ import {
   updateProfile,
   uploadDocument,
   getDocuments,
+  deleteEvent,
 } from "@/lib/api";
 import type { AdminUserOverview, HealthEvent, UserProfile } from "@/types/health";
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState<HealthEvent[]>([]);
+  const [filter, setFilter] = useState<string | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<HealthEvent | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -50,12 +53,13 @@ const Dashboard = () => {
       navigate("/login");
       return;
     }
-
+    
     const loadData = async () => {
       try {
         const [me, fetchedEvents] = await Promise.all([getMe(), getEvents()]);
         setUser(me);
-        setEvents(fetchedEvents);
+  // ensure chronological order (newest first)
+  setEvents(fetchedEvents.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
 
         if (me.is_staff) {
           const overview = await getAdminOverview();
@@ -90,10 +94,16 @@ const Dashboard = () => {
       let savedEvent: HealthEvent;
       if (editingEvent) {
         savedEvent = await updateEvent(editingEvent.id, formEvent);
-        setEvents((prev) => prev.map((item) => (item.id === savedEvent.id ? savedEvent : item)));
+        setEvents((prev) => {
+          const next = prev.map((item) => (item.id === savedEvent.id ? savedEvent : item));
+          return next.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        });
       } else {
         savedEvent = await createEvent(formEvent);
-        setEvents((prev) => [savedEvent, ...prev].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+        setEvents((prev) => {
+          const next = [...prev, savedEvent];
+          return next.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        });
       }
 
       if (file) {
@@ -103,7 +113,7 @@ const Dashboard = () => {
           setDocumentsMap((prev) => {
             const key = String(savedEvent.id ?? "");
             const next = { ...prev } as Record<string, import("@/types/health").DocumentRecord[]>;
-            next[key] = [...(next[key] ?? []), created];
+            next[key] = [...(next[key] ?? []), created as import("@/types/health").DocumentRecord];
             return next;
           });
         } catch (e) {
@@ -149,6 +159,8 @@ const Dashboard = () => {
     navigate("/login");
   };
 
+  const { t, toggle, setLang } = useI18n();
+
   if (isLoading) return <div className="p-8 text-center">Načítám data…</div>;
   if (isLoading) {
     return <div className="p-8 text-center">Načítám data…</div>;
@@ -159,7 +171,13 @@ const Dashboard = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-3">
-            <button onClick={() => navigate("/")} className="flex items-center gap-3 text-left">
+            <button onClick={() => {
+              if (window.location.pathname === "/dashboard") {
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              } else {
+                navigate("/");
+              }
+            }} className="flex items-center gap-3 text-left">
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <Activity className="h-6 w-6 text-primary-foreground" />
               </div>
@@ -167,17 +185,27 @@ const Dashboard = () => {
             </button>
 
             <div className="flex items-center gap-2">
-              <Button
-                onClick={() => {
-                  setEditingEvent(null);
-                  setIsDialogOpen(true);
-                }}
-                size="lg"
-                className="gap-2"
-              >
-                <Plus className="h-5 w-5" />
-                Přidat záznam
-              </Button>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <button title="Čeština" onClick={() => setLang("cs")} className="text-lg">🇨🇿</button>
+                  <button title="English" onClick={() => setLang("en")} className="text-lg">🇬🇧</button>
+                  <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle language">
+                    <Globe className="h-5 w-5" />
+                  </Button>
+                </div>
+
+                <Button
+                  onClick={() => {
+                    setEditingEvent(null);
+                    setIsDialogOpen(true);
+                  }}
+                  size="lg"
+                  className="gap-2"
+                >
+                  <Plus className="h-5 w-5" />
+                  {t("addRecord")}
+                </Button>
+              </div>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -201,10 +229,25 @@ const Dashboard = () => {
         {error && <p className="mb-4 text-destructive">{error}</p>}
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-          <Card className="p-6"><p className="text-sm text-muted-foreground">Celkem záznamů</p><p className="text-2xl font-bold">{events.length}</p></Card>
-          <Card className="p-6"><p className="text-sm text-muted-foreground">Léky</p><p className="text-2xl font-bold">{events.filter((e) => e.type === "medication").length}</p></Card>
-          <Card className="p-6"><p className="text-sm text-muted-foreground">Dokumenty</p><p className="text-2xl font-bold">{events.filter((e) => e.type === "document").length}</p></Card>
-          <Card className="p-6"><p className="text-sm text-muted-foreground">Operace</p><p className="text-2xl font-bold">{events.filter((e) => e.type === "surgery").length}</p></Card>
+          <Card className={`p-6 cursor-pointer ${filter === null ? "ring-2 ring-primary" : ""}`} onClick={() => setFilter(null)}>
+            <p className="text-sm text-muted-foreground">{t("totalRecords")}</p>
+            <p className="text-2xl font-bold">{events.length}</p>
+          </Card>
+
+          <Card className={`p-6 cursor-pointer ${filter === "medication" ? "ring-2 ring-primary" : ""}`} onClick={() => setFilter(filter === "medication" ? null : "medication")}>
+            <p className="text-sm text-muted-foreground">{t("medication")}</p>
+            <p className="text-2xl font-bold">{events.filter((e) => e.type === "medication").length}</p>
+          </Card>
+
+          <Card className={`p-6 cursor-pointer ${filter === "document" ? "ring-2 ring-primary" : ""}`} onClick={() => setFilter(filter === "document" ? null : "document")}>
+            <p className="text-sm text-muted-foreground">{t("documents")}</p>
+            <p className="text-2xl font-bold">{events.filter((e) => e.type === "document").length}</p>
+          </Card>
+
+          <Card className={`p-6 cursor-pointer ${filter === "surgery" ? "ring-2 ring-primary" : ""}`} onClick={() => setFilter(filter === "surgery" ? null : "surgery")}>
+            <p className="text-sm text-muted-foreground">{t("surgeries")}</p>
+            <p className="text-2xl font-bold">{events.filter((e) => e.type === "surgery").length}</p>
+          </Card>
         </div>
 
         <Card className="p-6 bg-card mb-6">
@@ -212,7 +255,7 @@ const Dashboard = () => {
           {events.length === 0 ? (
             <div className="text-center py-12">
               <Activity className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">Zatím nemáte žádné záznamy</p>
+              <p className="text-muted-foreground mb-4">{t("noRecords")}</p>
               <Button
                 onClick={() => {
                   setEditingEvent(null);
@@ -220,27 +263,29 @@ const Dashboard = () => {
                 }}
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Přidat první záznam
+                {t("addFirstRecord")}
               </Button>
             </div>
           ) : (
             <div className="space-y-4">
-                    {events.map((event, index) => (
-                      <TimelineEvent
-                        key={event.id}
-                        event={event}
-                        isLast={index === events.length - 1}
-                        onEdit={(selectedEvent) => {
-                          setEditingEvent(selectedEvent);
-                          setIsDialogOpen(true);
-                        }}
-                        documents={documentsMap[event.id] ?? []}
-                        onOpenDocument={(d) => {
-                          setViewerDoc(d);
-                          setViewerOpen(true);
-                        }}
-                      />
-                    ))}
+              {events
+                .filter((e) => (filter ? e.type === filter : true))
+                .map((event, index, arr) => (
+                  <TimelineEvent
+                    key={event.id}
+                    event={event}
+                    isLast={index === arr.length - 1}
+                    onEdit={(selectedEvent) => {
+                      setEditingEvent(selectedEvent);
+                      setIsDialogOpen(true);
+                    }}
+                    documents={documentsMap[event.id] ?? []}
+                    onOpenDocument={(d) => {
+                      setViewerDoc(d);
+                      setViewerOpen(true);
+                    }}
+                  />
+                ))}
             </div>
           )}
         </Card>
@@ -262,9 +307,9 @@ const Dashboard = () => {
 
 
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-        <DialogContent>
+          <DialogContent>
           <DialogHeader>
-            <DialogTitle>Můj profil</DialogTitle>
+            <DialogTitle>{t("myProfile")}</DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div><Label>Výška (cm)</Label><Input type="number" value={profile.height_cm ?? ""} onChange={(e) => setProfile({ ...profile, height_cm: e.target.value ? Number(e.target.value) : null })} /></div>
@@ -274,37 +319,79 @@ const Dashboard = () => {
             <div><Label>Pojišťovna</Label><Input value={profile.insurance_provider ?? ""} onChange={(e) => setProfile({ ...profile, insurance_provider: e.target.value })} /></div>
             <div><Label>Datum narození</Label><Input type="date" value={profile.date_of_birth ?? ""} onChange={(e) => setProfile({ ...profile, date_of_birth: e.target.value || null })} /></div>
           </div>
-          <Button onClick={handleSaveProfile}>Uložit profil</Button>
+          <Button onClick={handleSaveProfile}>{t("saveChanges")}</Button>
         </DialogContent>
       </Dialog>
 
       <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Změnit heslo</DialogTitle>
+            <DialogTitle>{t("changePassword")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             <div><Label>Původní heslo</Label><Input type="password" value={oldPassword} onChange={(e) => setOldPassword(e.target.value)} /></div>
             <div><Label>Nové heslo</Label><Input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} /></div>
-            <Button onClick={handleChangePassword}>Uložit nové heslo</Button>
+            <Button onClick={handleChangePassword}>{t("saveChanges")}</Button>
           </div>
         </DialogContent>
       </Dialog>
-      <AddEventDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} onAddEvent={handleSaveEvent} initialEvent={editingEvent} />
+      <AddEventDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onAddEvent={handleSaveEvent}
+        initialEvent={editingEvent}
+        existingDocuments={editingEvent ? (documentsMap[editingEvent.id] ?? []).map((d) => ({ id: String(d.id), title: d.title, file: d.file })) : []}
+  onDeleteDocument={async (id: string) => {
+          try {
+            // call API to delete document if available
+            // keep local state in sync
+            setDocumentsMap((prev) => {
+              const next = { ...prev };
+              if (!editingEvent) return next;
+              next[editingEvent.id] = (next[editingEvent.id] ?? []).filter((d) => String(d.id) !== id);
+              return next;
+            });
+          } catch (e) {
+            // ignore for now
+          }
+        }}
+        onDeleteRecord={async (id: string) => {
+          try {
+            await deleteEvent(id);
+            setEvents((prev) => prev.filter((ev) => ev.id !== id));
+            setDocumentsMap((prev) => {
+              const next = { ...prev };
+              delete next[id];
+              return next;
+            });
+          } catch (e) {
+            // TODO: show error
+          }
+        }}
+      />
 
       {/* Document viewer dialog */}
       <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
         <DialogContent className="sm:max-w-4xl w-full">
           <DialogHeader>
-            <DialogTitle>{viewerDoc?.title ?? "Dokument"}</DialogTitle>
+            <DialogTitle>{viewerDoc?.title ?? t("documents")}</DialogTitle>
           </DialogHeader>
           <div className="h-[70vh]">
             {viewerDoc ? (
-              (viewerDoc.file.endsWith(".png") || viewerDoc.file.endsWith(".jpg") || viewerDoc.file.endsWith(".jpeg") || viewerDoc.file.endsWith(".gif")) ? (
-                <img src={viewerDoc.file} alt={viewerDoc.title} className="max-h-[70vh] w-full object-contain" />
-              ) : (
-                <iframe src={viewerDoc.file} title={viewerDoc.title} className="w-full h-full border-0" />
-              )
+              (() => {
+                const lower = viewerDoc.file.toLowerCase();
+                const isImage = [".png", ".jpg", ".jpeg", ".gif", ".webp"].some((ext) => lower.endsWith(ext));
+                const isPdf = lower.endsWith(".pdf") || lower.startsWith("data:application/pdf");
+                if (isImage) {
+                  return <img src={viewerDoc.file} alt={viewerDoc.title} className="max-h-[70vh] w-full object-contain" />;
+                }
+                // PDFs and other embeddable types — use iframe which works with proper URLs/CORS
+                if (isPdf) {
+                  return <iframe src={viewerDoc.file} title={viewerDoc.title} className="w-full h-full border-0" />;
+                }
+                // fallback to iframe for anything else; if the server returns a download, the browser will prompt
+                return <iframe src={viewerDoc.file} title={viewerDoc.title} className="w-full h-full border-0" />;
+              })()
             ) : null}
           </div>
         </DialogContent>
