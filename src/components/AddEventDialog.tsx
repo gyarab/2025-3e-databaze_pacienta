@@ -7,6 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { HealthEvent } from "@/types/health";
+import AttachmentList from "@/components/AttachmentList";
 
 type EventFormData = Omit<HealthEvent, "id">;
 
@@ -124,7 +125,12 @@ export const AddEventDialog = ({ open, onOpenChange, onAddEvent, initialEvent, e
                 ) : (
                   existingDocuments.map((d) => (
                     <div key={d.id} className="flex items-center justify-between">
-                      <a href={d.file} target="_blank" rel="noreferrer" className="text-sm text-primary underline">📎 {d.title}</a>
+                      <div className="flex-1 mr-4">
+                        <AttachmentList
+                          documents={[{ id: d.id, title: d.title, file: d.file, medical_event: initialEvent.id }]}
+                          onOpenDocument={() => window.open(d.file, "_blank")}
+                        />
+                      </div>
                       {onDeleteDocument && (
                         <Button size="sm" variant="ghost" onClick={() => onDeleteDocument(d.id)}>{t("delete")}</Button>
                       )}

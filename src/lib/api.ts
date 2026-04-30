@@ -93,6 +93,8 @@ export const uploadDocument = async (title: string, file: File, medicalEventId?:
 
 export const getDocuments = () => apiRequest<DocumentRecord[]>("/documents/");
 
+export const deleteDocument = (id: string) => apiRequest<void>(`/documents/${id}/`, { method: "DELETE" });
+
 export const getProfile = () => apiRequest<PatientProfile>("/users/profile/");
 export const updateProfile = (data: PatientProfile) => apiRequest<PatientProfile>("/users/profile/", { method: "PATCH", body: JSON.stringify(data) });
 export const changePassword = (oldPassword: string, newPassword: string) =>

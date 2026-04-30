@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Activity, Plus, UserCircle2, FileText, Pill, Calendar, Globe } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import HelpButton from "@/components/HelpButton";
 import {
   changePassword,
   clearToken,
@@ -25,6 +26,7 @@ import {
   uploadDocument,
   getDocuments,
   deleteEvent,
+  deleteDocument,
 } from "@/lib/api";
 import type { AdminUserOverview, HealthEvent, UserProfile } from "@/types/health";
 
@@ -171,56 +173,58 @@ const Dashboard = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-3">
-            <button onClick={() => {
-              if (window.location.pathname === "/dashboard") {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              } else {
-                navigate("/");
-              }
-            }} className="flex items-center gap-3 text-left">
+            <button
+              onClick={() => {
+                if (window.location.pathname === "/dashboard") {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                } else {
+                  navigate("/");
+                }
+              }}
+              className="flex items-center gap-3 text-left"
+            >
               <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
                 <Activity className="h-6 w-6 text-primary-foreground" />
               </div>
               <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
             </button>
 
-            <div className="flex items-center gap-2">
+            <div className="flex-1" />
+            <div className="flex items-center gap-4">
               <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <button title="Čeština" onClick={() => setLang("cs")} className="text-lg">🇨🇿</button>
-                  <button title="English" onClick={() => setLang("en")} className="text-lg">🇬🇧</button>
-                  <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle language">
-                    <Globe className="h-5 w-5" />
-                  </Button>
-                </div>
-
-                <Button
-                  onClick={() => {
-                    setEditingEvent(null);
-                    setIsDialogOpen(true);
-                  }}
-                  size="lg"
-                  className="gap-2"
-                >
-                  <Plus className="h-5 w-5" />
-                  {t("addRecord")}
+                <button title="Čeština" onClick={() => setLang("cs")} className={`px-2 py-1 rounded ${t("lang") === "cs" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>CZ</button>
+                <button title="English" onClick={() => setLang("en")} className={`px-2 py-1 rounded ${t("lang") === "en" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>EN</button>
+                <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle language">
+                  <Globe className="h-5 w-5" />
                 </Button>
+                <HelpButton />
               </div>
 
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="icon" aria-label="Můj profil">
-                    <UserCircle2 className="h-5 w-5" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setProfileOpen(true)}>Můj profil</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setPasswordOpen(true)}>Změnit heslo</DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleLogout}>Odhlásit se</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button
+                onClick={() => {
+                  setEditingEvent(null);
+                  setIsDialogOpen(true);
+                }}
+                size="lg"
+                className="gap-2"
+              >
+                <Plus className="h-5 w-5" />
+                {t("addRecord")}
+              </Button>
             </div>
-            {/* profile + add button are in the previous group; removed duplicate add and separate logout button */}
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="Můj profil">
+                  <UserCircle2 className="h-5 w-5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setProfileOpen(true)}>Můj profil</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setPasswordOpen(true)}>Změnit heslo</DropdownMenuItem>
+                <DropdownMenuItem onClick={handleLogout}>Odhlásit se</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
       </header>
@@ -341,18 +345,19 @@ const Dashboard = () => {
         onAddEvent={handleSaveEvent}
         initialEvent={editingEvent}
         existingDocuments={editingEvent ? (documentsMap[editingEvent.id] ?? []).map((d) => ({ id: String(d.id), title: d.title, file: d.file })) : []}
-  onDeleteDocument={async (id: string) => {
+        onDeleteDocument={async (id: string) => {
           try {
-            // call API to delete document if available
-            // keep local state in sync
+            await deleteDocument(id);
             setDocumentsMap((prev) => {
               const next = { ...prev };
               if (!editingEvent) return next;
               next[editingEvent.id] = (next[editingEvent.id] ?? []).filter((d) => String(d.id) !== id);
               return next;
             });
+            // show toast
+            try { const { toast } = await import("@/components/ui/sonner"); toast.success("Dokument smazán"); } catch {}
           } catch (e) {
-            // ignore for now
+            try { const { toast } = await import("@/components/ui/sonner"); toast.error((e as Error).message || "Chyba při mazání"); } catch {}
           }
         }}
         onDeleteRecord={async (id: string) => {

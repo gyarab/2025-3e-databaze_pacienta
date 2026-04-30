@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Activity, FileText, Clock, Search, Shield, Sparkles, Globe } from "lucide-react";
 import { useI18n } from "@/lib/i18n";
+import HelpButton from "@/components/HelpButton";
 import { useRef } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -35,8 +36,9 @@ const Index = () => {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button className="flex items-center gap-3" onClick={() => {
+            <div className="flex items-center justify-between w-full">
+              <div className="flex items-center gap-3">
+                <button className="flex items-center gap-3" onClick={() => {
               // smooth scroll to top when already on the page instead of full navigation reload
               if (window.location.pathname === "/") {
                 window.scrollTo({ top: 0, behavior: "smooth" });
@@ -49,17 +51,21 @@ const Index = () => {
               </div>
               <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
             </button>
+              </div>
               <div className="flex items-center gap-2">
-                <button title="Čeština" onClick={() => setLang("cs")} className="text-lg">🇨🇿</button>
-                <button title="English" onClick={() => setLang("en")} className="text-lg">🇬🇧</button>
-                <Button variant="ghost" size="icon" onClick={() => { toggle(); }} aria-label="Toggle language">
-                  <Globe className="h-5 w-5" />
+                <div className="flex items-center gap-2">
+                  <button title="Čeština" onClick={() => setLang("cs")} className={`px-2 py-1 rounded ${t("lang") === "cs" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>CZ</button>
+                  <button title="English" onClick={() => setLang("en")} className={`px-2 py-1 rounded ${t("lang") === "en" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>EN</button>
+                  <Button variant="ghost" size="icon" onClick={() => { toggle(); }} aria-label="Toggle language">
+                    <Globe className="h-5 w-5" />
+                  </Button>
+                  <HelpButton />
+                </div>
+                <Button onClick={() => navigate("/login")} size="lg">
+                  Začít
                 </Button>
               </div>
             </div>
-            <Button onClick={() => navigate("/login")} size="lg">
-              Začít
-            </Button>
           </div>
         </div>
       </header>

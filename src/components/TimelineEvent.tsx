@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { cs } from "date-fns/locale";
 import type { HealthEvent, DocumentRecord } from "@/types/health";
 import { useI18n } from "@/lib/i18n";
+import AttachmentList from "@/components/AttachmentList";
 
 type TimelineEventProps = {
   event: HealthEvent;
@@ -65,24 +66,15 @@ export const TimelineEvent = ({ event, isLast, onEdit, documents = [], onOpenDoc
             <p className="text-sm text-muted-foreground">{format(new Date(event.date), "d. MMMM yyyy", { locale: cs })}</p>
           </div>
           <Button variant="outline" size="sm" onClick={() => onEdit(event)}>
-            <Pencil className="h-4 w-4 mr-1" /> Upravit
+            <Pencil className="h-4 w-4 mr-1" /> {t("edit")}
           </Button>
         </div>
 
         {event.description && <p className="text-foreground mb-2">{event.description}</p>}
 
         {documents.length > 0 && (
-          <div className="mt-3 flex flex-col gap-2">
-            {documents.map((d) => (
-              <button
-                key={d.id}
-                type="button"
-                onClick={() => onOpenDocument?.(d)}
-                className="text-sm text-primary underline text-left"
-              >
-                📎 {d.title}
-              </button>
-            ))}
+          <div className="mt-3">
+            <AttachmentList documents={documents} onOpenDocument={onOpenDocument} />
           </div>
         )}
 
