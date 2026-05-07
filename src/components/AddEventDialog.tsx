@@ -61,7 +61,7 @@ export const AddEventDialog = ({ open, onOpenChange, onAddEvent, initialEvent, e
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="w-full max-w-full sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{initialEvent ? t("editRecord") : t("createRecord")}</DialogTitle>
         </DialogHeader>
@@ -141,7 +141,7 @@ export const AddEventDialog = ({ open, onOpenChange, onAddEvent, initialEvent, e
             </div>
           )}
 
-          <div className="flex gap-3 pt-4">
+          <div className="flex flex-col gap-3 pt-4 sm:flex-row">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} className="flex-1">
               {t("cancel")}
             </Button>

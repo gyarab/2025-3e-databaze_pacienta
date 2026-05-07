@@ -55,17 +55,17 @@ export const TimelineEvent = ({ event, isLast, onEdit, documents = [], onOpenDoc
       </div>
 
       <Card className="flex-1 p-4 mb-4 hover:shadow-md transition-all group-hover:border-primary/50">
-        <div className="flex items-start justify-between gap-4 mb-2">
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <h3 className="font-semibold text-foreground text-lg">{event.title}</h3>
-                        <Badge variant="outline" className={eventColors[event.type]}>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-2">
+          <div className="flex-1 min-w-0">
+            <div className="flex flex-wrap items-center gap-2 mb-1">
+              <h3 className="font-semibold text-foreground text-lg break-words">{event.title}</h3>
+              <Badge variant="outline" className={eventColors[event.type]}>
                 {labels[event.type]}
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">{format(new Date(event.date), "d. MMMM yyyy", { locale: cs })}</p>
           </div>
-          <Button variant="outline" size="sm" onClick={() => onEdit(event)}>
+          <Button variant="outline" size="sm" className="self-start" onClick={() => onEdit(event)}>
             <Pencil className="h-4 w-4 mr-1" /> {t("edit")}
           </Button>
         </div>

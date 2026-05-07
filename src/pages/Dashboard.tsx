@@ -172,7 +172,7 @@ const Dashboard = () => {
     <div className="min-h-screen bg-gradient-to-br from-background via-background to-secondary">
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <button
               onClick={() => {
                 if (window.location.pathname === "/dashboard") {
@@ -189,9 +189,8 @@ const Dashboard = () => {
               <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
             </button>
 
-            <div className="flex-1" />
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-end gap-3">
+              <div className="flex flex-wrap items-center gap-2 justify-end">
                 <button title="Čeština" onClick={() => setLang("cs")} className={`px-2 py-1 rounded ${t("lang") === "cs" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>CZ</button>
                 <button title="English" onClick={() => setLang("en")} className={`px-2 py-1 rounded ${t("lang") === "en" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>EN</button>
                 <Button variant="ghost" size="icon" onClick={toggle} aria-label="Toggle language">
@@ -206,25 +205,25 @@ const Dashboard = () => {
                   setIsDialogOpen(true);
                 }}
                 size="lg"
-                className="gap-2"
+                className="gap-2 min-w-[160px]"
               >
                 <Plus className="h-5 w-5" />
                 {t("addRecord")}
               </Button>
-            </div>
 
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" aria-label="Můj profil">
-                  <UserCircle2 className="h-5 w-5" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setProfileOpen(true)}>Můj profil</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setPasswordOpen(true)}>Změnit heslo</DropdownMenuItem>
-                <DropdownMenuItem onClick={handleLogout}>Odhlásit se</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="Můj profil">
+                    <UserCircle2 className="h-5 w-5" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setProfileOpen(true)}>Můj profil</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setPasswordOpen(true)}>Změnit heslo</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleLogout}>Odhlásit se</DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
         </div>
       </header>
@@ -311,7 +310,7 @@ const Dashboard = () => {
 
 
       <Dialog open={profileOpen} onOpenChange={setProfileOpen}>
-          <DialogContent>
+          <DialogContent className="w-full max-w-full sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>{t("myProfile")}</DialogTitle>
           </DialogHeader>
@@ -328,7 +327,7 @@ const Dashboard = () => {
       </Dialog>
 
       <Dialog open={passwordOpen} onOpenChange={setPasswordOpen}>
-        <DialogContent>
+        <DialogContent className="w-full max-w-full sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>{t("changePassword")}</DialogTitle>
           </DialogHeader>
@@ -377,7 +376,7 @@ const Dashboard = () => {
 
       {/* Document viewer dialog */}
       <Dialog open={viewerOpen} onOpenChange={setViewerOpen}>
-        <DialogContent className="sm:max-w-4xl w-full">
+        <DialogContent className="w-full max-w-full sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>{viewerDoc?.title ?? t("documents")}</DialogTitle>
           </DialogHeader>

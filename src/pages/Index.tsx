@@ -35,36 +35,34 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center justify-between w-full">
-              <div className="flex items-center gap-3">
-                <button className="flex items-center gap-3" onClick={() => {
-              // smooth scroll to top when already on the page instead of full navigation reload
-              if (window.location.pathname === "/") {
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              } else {
-                navigate("/");
-              }
-            }}>
-              <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
-                <Activity className="h-6 w-6 text-primary-foreground" />
-              </div>
-              <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
-            </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2">
-                  <button title="Čeština" onClick={() => setLang("cs")} className={`px-2 py-1 rounded ${t("lang") === "cs" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>CZ</button>
-                  <button title="English" onClick={() => setLang("en")} className={`px-2 py-1 rounded ${t("lang") === "en" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>EN</button>
-                  <Button variant="ghost" size="icon" onClick={() => { toggle(); }} aria-label="Toggle language">
-                    <Globe className="h-5 w-5" />
-                  </Button>
-                  <HelpButton />
+          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-center gap-3">
+              <button className="flex items-center gap-3" onClick={() => {
+                // smooth scroll to top when already on the page instead of full navigation reload
+                if (window.location.pathname === "/") {
+                  window.scrollTo({ top: 0, behavior: "smooth" });
+                } else {
+                  navigate("/");
+                }
+              }}>
+                <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-primary to-accent flex items-center justify-center">
+                  <Activity className="h-6 w-6 text-primary-foreground" />
                 </div>
-                <Button onClick={() => navigate("/login")} size="lg">
-                  Začít
+                <h1 className="text-2xl font-bold text-foreground">MediCare</h1>
+              </button>
+            </div>
+            <div className="flex flex-wrap items-center justify-end gap-2">
+              <div className="flex flex-wrap items-center gap-2 justify-end">
+                <button title="Čeština" onClick={() => setLang("cs")} className={`px-2 py-1 rounded ${t("lang") === "cs" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>CZ</button>
+                <button title="English" onClick={() => setLang("en")} className={`px-2 py-1 rounded ${t("lang") === "en" ? "bg-primary text-primary-foreground" : "bg-transparent text-foreground"}`}>EN</button>
+                <Button variant="ghost" size="icon" onClick={() => { toggle(); }} aria-label="Toggle language">
+                  <Globe className="h-5 w-5" />
                 </Button>
+                <HelpButton />
               </div>
+              <Button onClick={() => navigate("/login")} size="lg" className="min-w-[120px]">
+                Začít
+              </Button>
             </div>
           </div>
         </div>
